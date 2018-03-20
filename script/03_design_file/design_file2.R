@@ -126,8 +126,7 @@ detach("package:DiGGer", unload = T)
 start_date <- c("2018Feb12",
            "2018Feb16",
            "2018Mar03",
-           "2018Mar06",
-           "2018Mar09")
+           "2018Mar06")
 device <- str_c("A", 1:16)
 variety <- c("CH Claro", "Skagen", "Titlis")
 
