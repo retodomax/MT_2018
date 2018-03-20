@@ -1,0 +1,1 @@
+2018-03-13 12:57:32.595791	data	IMPP_ETH_A10	Angle	1.62	Raw_Angle	1.62	Temp	29.52	Hum	29.30	Lux	2832.00
