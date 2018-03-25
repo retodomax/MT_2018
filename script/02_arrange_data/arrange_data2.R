@@ -23,12 +23,12 @@ source("script/00_functions/fun_MT.R")
 # parameters --------------------------------------------------------------
 
 values_to_cut <- 20
-my_path <- "data/01_lenviro"
+my_path <- "data/01_lenviro/A"
 print_all <- F
-print_all_suffix <- "all"
+print_all_suffix <- "_all"
 
 print_ag <- F
-print_ag_suffix <- "test"
+print_ag_suffix <- "_all"
 
 
 
@@ -133,7 +133,7 @@ lenviro <- lenviro %>%
 
 # plot var and model ------------------------------------------------------
 
-if (print_all){pdf(str_c("fig/var_mod_", print_all_suffix, ".pdf"),
+if (print_all){pdf(str_c("fig/var_mod", print_all_suffix, ".pdf"),
                    width = 8, height = 7, bg = "white")}
 mod_summary <- fun_plot_overview(df = lenviro)
 if (print_all){dev.off()}
@@ -168,7 +168,7 @@ ag_lenviro <- lenviro %>%
 
 # plot aggregated var and model -------------------------------------------
 
-if (print_ag){pdf(str_c("fig/ag_var_mod_", print_ag_suffix, ".pdf"),
+if (print_ag){pdf(str_c("fig/ag_var_mod", print_ag_suffix, ".pdf"),
                   width = 8, height = 7, bg = "white")}
 mod_summary <- fun_plot_overview(ag_lenviro)
 if (print_ag){dev.off()}

@@ -1,1 +1,0 @@
-2018-02-06 11:57:06.961637	data	gle	185.42	Temp	29.18	Hum	35.	data	IMPP_A13	Angle	184.28	Raw_Angle	184.28	Temp	29.18	Hum	35.54	Lux	737.00

@@ -1,0 +1,2 @@
+2018-03-16 15:38:52.093214	data	E	Heading (degrees)	213.52	X	-114.23	Y	-75.66	Humidity (%)	42.60	Temperature (C)	29.80	lux	3078.00
+2018-03-16 15:50:35.391219	data	E	Heading (degrees)	213.53	X	-114.50	Y	-75.89	Humidity (%)	44.40	Temperature (C)	29.80	lux	3068.00

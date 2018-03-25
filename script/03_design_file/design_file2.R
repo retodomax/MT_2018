@@ -59,12 +59,118 @@ design <- expand.grid(device = device, start_date = start_date) %>%
          dcol = ifelse(dcol == 0, 4, dcol),
          dchamber = ceiling(match(dframe, LETTERS[1:26])/2),
          dreplicate = c(rep(1:4, each = 330), rep(NA, 96*14-4*330)),
-         variety = c(as.vector(replicate(4,base::sample(variety, length(variety), replace = F))), rep(NA, 96*14-4*330))) %>% 
+         variety = "")  %>% 
   select(experiment, start_date, device, dchamber, dframe, drow, dcol, dposition, everything()) %>% 
   as_tibble() %>% 
   FunFactorize(c("device", "dchamber", "dframe", "drow", "dcol", "dposition", "dreplicate"))
 design
-View(design)
+
+
+## easy way to produce randomized varieties:
+# c(as.vector(replicate(4,base::sample(variety, length(variety), replace = F))), rep(NA, 96*14-4*330)))
+
+
+# complicated way
+# two options:
+# 1. 
+#   1) random permutation for replicate 1
+#   2) complete last start_date block with new varieties randomized that no position is taken by a 
+#   variety which was already at a certain position,
+#   3) complete replicate 2, with rest varieties randomized that no position is taken by a variety
+#   which was already at a certain position.
+#   4) and so on...
+
+# 2.
+#   1) randomize all blocks
+#   2) exchange varieties accross start_date where two of the same varieties are within one start_date
+#   3) exchange varieties within start_date where they are at the same position as bevore
+
+
+# I go for option 2...
+
+set.seed(222)
+design$variety <- c(as.vector(replicate(4,base::sample(variety, length(variety), replace = F))),
+                    rep(NA, 96*14-4*330))
+
+
+# 1) find a way to plot a single start_date design
+fun_plot_design(date = "2018-04-06")
+fun_plot_design(date = "2018-04-27")
+fun_plot_design(date = "2018-07-06")
+
+
+
+
+
+
+
+# flip varieties across start_date ----------------------------------------
+
+
+# exchange varieties accross start_date
+# where two of the same varieties
+# are within one start_date
+
+# 1) search for start_date with two times the same variety
+var_doublicates <- design %>% 
+  group_by(start_date, variety) %>% 
+  count() %>% 
+  filter(n == 2) %>% 
+  inner_join(design) %>% 
+  select(start_date, variety, experiment, dreplicate) %>% 
+  filter(row_number() %% 2 == 0)
+var_doublicates
+
+
+while(nrow(var_doublicates) > 0){
+  # 2) randomly select switch partners within the same replicate
+  set.seed(220)
+  var_doublicates$experiment_switch <- apply(var_doublicates, 1, function(x){
+    selection <- design$dreplicate == x[["dreplicate"]] &
+      design$start_date != x[["start_date"]] &
+      !is.na(design$variety)
+    sample(design$experiment[selection], 1)
+  })
+  var_doublicates <- var_doublicates %>% 
+    inner_join(design, by = c("experiment_switch" = "experiment"), suffix = c("", "_switch")) %>% 
+    select(start_date, variety, experiment, dreplicate, experiment_switch, variety_switch)
+  
+  #  3) flip the varieties of the switch partners
+  for (i in seq_along(var_doublicates$experiment)) {
+    selection1 <- design$experiment == var_doublicates$experiment[i]
+    selection2 <- design$experiment == var_doublicates$experiment_switch[i]
+    design$variety[selection1] <- design$variety[selection1] + design$variety[selection2]
+    design$variety[selection2] <- design$variety[selection1] - design$variety[selection2]
+    design$variety[selection1] <- design$variety[selection1] - design$variety[selection2]
+  }
+  
+  # 4) search again for start_date with two times the same variety
+  var_doublicates <- design %>% 
+    group_by(start_date, variety) %>% 
+    count() %>% 
+    filter(n == 2) %>% 
+    inner_join(design) %>% 
+    select(start_date, variety, experiment, dreplicate) %>% 
+    filter(row_number() %% 2 == 0)
+}
+
+
+
+# flip varieties within start_date ----------------------------------------
+
+
+# flip varieties within start_date ----------------------------------------
+
+
+# exchange varieties within start_date
+# where one varieties is measured by the
+# same device several times
+
+# 1) search for start_date with two times the same variety
+
+design
+
+
 
 
 
@@ -75,31 +181,6 @@ View(design)
 # gehe von position zu position und sample immer aus einem engeschraenkten raum von moeglichen varieties
 # (abhaengig von vorherigen werten)
 
-
-
-
-
-library(DiGGer)
-id.2d <- DiGGer(NumberOfTreatments = 32,
-                RowsInDesign = 8,
-                ColumnsInDesign = 8,
-                RowsInReplicate = 4,
-                ColumnsInReplicate = 8,
-                RowsInBlock = NULL,
-                ColumnsInBlock = NULL,
-                BlockIn2D = c(2,2), #*
-                Spatial = FALSE,
-                RowColumn = FALSE)
-d.2d <- run(id.2d)
-d.2d$dlist
-# write.table(d.2d$dlist, file="2dDesign.txt", sep="\t", row.names = FALSE)
-m.2d <- getDesign(d.2d)
-getConcurrence(d.2d)
-
-detach("package:vegan", unload=TRUE)
-detach("package:DiGGer", unload = T)
-#*first number gives number of rows per IB of first blocking dimension
-#second number gives number of columns per IB of second blocking dimension
 
 
 
@@ -123,26 +204,6 @@ detach("package:DiGGer", unload = T)
 
 
 
-start_date <- c("2018Feb12",
-           "2018Feb16",
-           "2018Mar03")
-device <- str_c("A", 1:16)
-variety <- c("CH Claro", "Skagen", "Titlis")
-
-design <- expand.grid(device = device, start_date = start_date) %>% 
-  mutate(experiment = str_c(start_date, "_", device),
-         position = as.numeric(str_extract(device, patter = "[:digit:]+")),
-         block = str_extract(device, patter = "[:alpha:]"),
-         iblock1 = cut(position, breaks = c(0,4,8,12,16), labels = 1:4),
-         iblock2 = position %% 4,
-         iblock2 = ifelse(iblock2 == 0, 4, iblock2),
-         variety = base::sample(variety, length(experiment), replace = T)) %>% 
-  select(experiment, start_date, everything())
-# Better: make two columns for variety: variety_nr and variety_name
-# assign a certain variety_nr to each experiment and join with a variety file (variety_nr, variety_name)
-
-
-design
 # Questions:
 # how many devices and varieties are there finally? --> 96
 

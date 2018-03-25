@@ -207,3 +207,134 @@ lenviro %>%
   View()
 
 
+
+
+
+
+
+# find start_time with the same variety in it -----------------------------
+
+# 2) search for start_date with two times the same variety
+
+var_doublicates <- design %>%
+  group_by(start_date, variety) %>%
+  count() %>%
+  filter(n == 2) %>%
+  inner_join(design) %>%
+  select(start_date, variety, experiment, dreplicate) %>%
+  filter(row_number() %% 2 == 0)
+var_doublicates
+
+set.seed(220)
+var_doublicates$experiment_switch <- apply(var_doublicates, 1, function(x){
+  selection <- design$dreplicate == x[["dreplicate"]] &
+    design$start_date != x[["start_date"]] &
+    !is.na(design$variety)
+  sample(design$experiment[selection], 1)
+})
+var_doublicates <- var_doublicates %>%
+  inner_join(design, by = c("experiment_switch" = "experiment"), suffix = c("", "_switch")) %>%
+  select(start_date, variety, experiment, dreplicate, experiment_switch, variety_switch)
+
+
+
+# 3) save old design file
+design_old <- design
+
+
+# 4) flip varieties
+for (i in seq_along(var_doublicates$experiment)) {
+  selection1 <- design$experiment == var_doublicates$experiment[i]
+  selection2 <- design$experiment == var_doublicates$experiment_switch[i]
+  design$variety[selection1] <- design$variety[selection1] + design$variety[selection2]
+  design$variety[selection2] <- design$variety[selection1] - design$variety[selection2]
+  design$variety[selection1] <- design$variety[selection1] - design$variety[selection2]
+}
+
+# 5) compare
+var_doublicates
+fun_plot_design(df = design_old, date = "2018-04-27")
+fun_plot_design(date = "2018-04-27")
+fun_plot_design(df = design_old, date = "2018-05-04")
+fun_plot_design(date = "2018-05-04")
+
+fun_plot_design(df = design_old, date = "2018-05-18")
+fun_plot_design(date = "2018-05-18")
+
+
+# 6) search again for start_date with two times the same variety
+var_doublicates <- design %>%
+  group_by(start_date, variety) %>%
+  count() %>%
+  filter(n == 2) %>%
+  inner_join(design) %>%
+  select(start_date, variety, experiment, dreplicate) %>%
+  filter(row_number() %% 2 == 0)
+var_doublicates
+set.seed(221)
+var_doublicates$experiment_switch <- apply(var_doublicates, 1, function(x){
+  selection <- design$dreplicate == x[["dreplicate"]] &
+    design$start_date != x[["start_date"]] &
+    !is.na(design$variety)
+  sample(design$experiment[selection], 1)
+})
+var_doublicates <- var_doublicates %>%
+  inner_join(design, by = c("experiment_switch" = "experiment"), suffix = c("", "_switch")) %>%
+  select(start_date, variety, experiment, dreplicate, experiment_switch, variety_switch)
+var_doublicates
+
+fun_plot_design(date = "2018-05-18")
+
+
+
+# 7) save old design file
+design_old2 <- design
+
+
+# 8) flip varieties
+for (i in seq_along(var_doublicates$experiment)) {
+  selection1 <- design$experiment == var_doublicates$experiment[i]
+  selection2 <- design$experiment == var_doublicates$experiment_switch[i]
+  design$variety[selection1] <- design$variety[selection1] + design$variety[selection2]
+  design$variety[selection2] <- design$variety[selection1] - design$variety[selection2]
+  design$variety[selection1] <- design$variety[selection1] - design$variety[selection2]
+}
+
+
+# 9) compare
+fun_plot_design(date = "2018-05-18")
+
+
+
+
+# fun plot design ---------------------------------------------------------
+
+fun_plot_design <- function(df = design, date = "2018-04-06", suffix = "") {
+  opar <- par(mfrow = c(3,2), mar = c(0.5,0.5,0.5,0.5), oma = c(4,4,3,1), pty = "s"); on.exit(opar)
+  mycol <- c("#252525", "#08519c")
+  for (i in levels(df[["dframe"]])) {
+    subset <- df %>% 
+      filter(start_date == date) %>% 
+      filter(dframe == i)
+    image(x = 1:4, y = 1:4, z = matrix(subset$variety, nrow = 4),
+          zlim = c(1,330), col = heat.colors(330), xlab = "", ylab = "")
+    text(x = subset$dcol, y = subset$drow, labels = subset$variety)
+    # text(x = subset$dcol, y = subset$drow, labels = subset$dreplicate, pos = 1)
+    rect(xleft = as.numeric(as.character(subset$dcol))-0.5,
+         xright = as.numeric(as.character(subset$dcol))+0.5,
+         ybottom = as.numeric(as.character(subset$drow))-0.5,
+         ytop = as.numeric(as.character(subset$drow))-0.25,
+         col = mycol[as.numeric(as.character(subset$dreplicate)) %% 2 + 1])
+    text(x = as.numeric(as.character(subset$dcol)),
+         y = as.numeric(as.character(subset$drow))-0.375,
+         labels = subset$dreplicate, col = "white", cex = 0.9)
+    box()
+    mtext(text = i, side = 2, line = 3, cex = 3, las = 2, padj = 0)
+  }
+  mtext(text = "dcol", side = 1, line = 2, outer = T)
+  mtext(text = "drow", side = 2, line = 2, outer = T)
+  mtext(text = str_c("start_date: ", date, suffix), side = 3, line = 1, outer = T, cex = 1.5, col = "gray", adj = 0)
+}
+
+
+

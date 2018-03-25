@@ -1,0 +1,8 @@
+angle		[°]
+temp		[°C]
+hum			[%]
+lux			[lux]
+l_diff		[mm]
+ler			[mm/s]
+l_cum		[mm]
+vpd			[hPa]

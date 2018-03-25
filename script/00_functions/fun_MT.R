@@ -105,9 +105,12 @@ fun_plot_lerModel <- function(df) {
                      xtick_lwd = 1, ytick_lwd = 1, box_lwd = 1)
       lines(subset$date_time, subset$pred_ler,col="#807dba", lwd = 2)
       
-      text(x=FunXPosition(0.3),y= FunYPosition(0.3),labels=mod_labels,pos=4, cex = 0.8)
-      text(x=FunXPosition(0.5),y= FunYPosition(0.3),labels=estimates,pos=4, cex = 0.8)
-      text(x=FunXPosition(0.7),y= FunYPosition(0.3),labels=pval,pos=4, cex = 0.8)
+      text(x=grconvertX(0.3, from = "npc"),y= grconvertY(0.3, from = "npc"),
+           labels=mod_labels,pos=4, cex = 0.8)
+      text(x=grconvertX(0.5, from = "npc"),y= grconvertY(0.3, from = "npc"),
+           labels=estimates,pos=4, cex = 0.8)
+      text(x=grconvertX(0.7, from = "npc"),y= grconvertY(0.3, from = "npc"),
+           labels=pval,pos=4, cex = 0.8)
       
       plot(subset$date_time, subset$l_cum, col = "grey", type = "l", lwd = 2,
            axes = F, ann = F)
@@ -231,9 +234,12 @@ fun_plot_overview <- function(df, format_date = "") {
                      xtick_lwd = 1, ytick_lwd = 1, box_lwd = 1, format = format_date)
       lines(subset$date_time, subset$pred_ler,col="#807dba", lwd = 2)
       
-      text(x=FunXPosition(0.3),y= FunYPosition(0.3),labels=mod_labels,pos=4, cex = 0.8)
-      text(x=FunXPosition(0.5),y= FunYPosition(0.3),labels=estimates,pos=4, cex = 0.8)
-      text(x=FunXPosition(0.7),y= FunYPosition(0.3),labels=pval,pos=4, cex = 0.8)
+      text(x=grconvertX(0.3, from = "npc"),y= grconvertY(0.3, from = "npc"),
+           labels=mod_labels,pos=4, cex = 0.8)
+      text(x=grconvertX(0.5, from = "npc"),y= grconvertY(0.3, from = "npc"),
+           labels=estimates,pos=4, cex = 0.8)
+      text(x=grconvertX(0.7, from = "npc"),y= grconvertY(0.3, from = "npc"),
+           labels=pval,pos=4, cex = 0.8)
       
       plot(subset$date_time, subset$l_cum, col = "grey", type = "l", lwd = 2,
            axes = F, ann = F)
@@ -268,4 +274,62 @@ fun_plot_overview <- function(df, format_date = "") {
   names(model_summaries) <- levels(df[["experiment"]])
   invisible(model_summaries)
 }
+
+
+
+
+# fun plot design ---------------------------------------------------------
+
+fun_plot_design <- function(df = design, date = "2018-04-06", suffix = "") {
+  opar1 <- FunPar(tcl = 0, mgp = c(0.5,0.2,0), family = "")
+  opar2 <- par(mfrow = c(3,2), mar = c(3,4.5,2.5,0.5), oma = c(1,5,6,1), pty = "s", xpd=NA); on.exit(c(opar1, opar2))
+  mycol <- c("#08519c", "#252525")
+  a <- 1
+  for (i in levels(df[["dframe"]])) {
+    subset <- df %>% 
+      filter(start_date == date) %>% 
+      filter(dframe == i)
+    image(x = 1:4, y = 1:4, z = matrix(subset$variety, nrow = 4),
+          zlim = c(1,330), col = heat.colors(330), xlab = "dcol", ylab = "drow", axes = F, ann = F)
+    mtext(text = str_c("dframe: ", i), side = 3, line = 0.5, adj = 0, col = "gray")
+    FunAxis(xtitle = "dcol", ytitle = "drow", xline = 1, yline = 1)
+    text(x = subset$dcol, y = subset$drow, labels = subset$variety)
+    rect(xleft = as.numeric(as.character(subset$dcol))-0.5,
+         xright = as.numeric(as.character(subset$dcol))+0.5,
+         ybottom = as.numeric(as.character(subset$drow))-0.5,
+         ytop = as.numeric(as.character(subset$drow))-0.25,
+         col = mycol[as.numeric(as.character(subset$dreplicate)) %% 2 + 1])
+    text(x = as.numeric(as.character(subset$dcol)),
+         y = as.numeric(as.character(subset$drow))-0.375,
+         labels = subset$dreplicate, col = "white", cex = 0.9)
+    box()
+    rect(grconvertX(0.02, from='ndc'), grconvertY(0.02, from='nfc'),
+         grconvertX(0.98, from='ndc'), grconvertY(1, from='nfc'), border = "gray")
+    text(x = grconvertX(0.05, from='ndc'), y = grconvertY(0.5, from='nfc'), labels = str_c("dchamber: ", floor(a)),
+         srt = 90, col = "gray", cex = 2)
+    a <- a + 0.5
+  }
+  mtext(text = str_c("start_date: ", date, suffix), side = 3, line = 3, outer = T, cex = 1.5, col = "gray", adj = 0)
+  rect(grconvertX(0.90, from = "ndc"), grconvertY(0.92, from = "ndc"),
+       grconvertX(0.98, from = "ndc"), grconvertY(0.98, from = "ndc"), col = "orange")
+  text(grconvertX(0.94, from = "ndc"), grconvertY(0.95, from = "ndc"), labels = "variety")
+  rect(grconvertX(0.90, from = "ndc"), grconvertY(0.92, from = "ndc"),
+       grconvertX(0.98, from = "ndc"), grconvertY(0.935, from = "ndc"), col = mycol[2])
+  text(grconvertX(0.94, from = "ndc"), grconvertY(0.9275, from = "ndc"), labels = "dreplicate", col = "white", cex = 0.8)
+}
+
+
+
+# fun flip two var in design ----------------------------------------------
+
+fun_flip <- function(df = design, selec1 = selection1, selec2 = selection2, flip_var = "variety") {
+  if(any(selection1 != selection2)) {
+    df[[flip_var]][selec1] <- df[[flip_var]][selec1] + df[[flip_var]][selec2]
+    df[[flip_var]][selec2] <- df[[flip_var]][selec1] - df[[flip_var]][selec2]
+    df[[flip_var]][selec1] <- df[[flip_var]][selec1] - df[[flip_var]][selec2]
+  }
+  df
+}
+
+
 
